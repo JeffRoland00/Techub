@@ -2,6 +2,14 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+//Jeff Roland Nii Mensah	10912479
+//Isaac Kwakye	10917856
+//Edward Kamasah	10868536
+//Akwasi Adu Asabre	10918086
+//Joseph Anning Nyantakyi	10899563
+
+
+
 class Drug {
     private String name;
     private String dosage;
