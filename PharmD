@@ -1,0 +1,288 @@
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.TreeMap;
+
+public class PharmacyManagementSystem {
+    public static void main(String[] args) {
+        ArrayList<Drug> drugs = new ArrayList<>();
+        TreeMap<Date, Purchase> purchaseHistory = new TreeMap<>();
+        HashMap<Drug, ArrayList<Supplier>> drugSuppliers = new HashMap<>();
+        HashMap<String, Integer> drugSales = new HashMap<>();
+
+        // Sample data for demonstration purposes
+        drugs.add(new Drug("D001", "Paracetamol", 100, 5.0));
+        drugs.add(new Drug("D002", "Aspirin", 50, 4.5));
+        drugs.add(new Drug("D003", "Ibuprofen", 80, 6.0));
+
+        Scanner scanner = new Scanner(System.in);
+        int choice;
+
+        do {
+            System.out.println("Pharmacy Management System Menu");
+            System.out.println("1. Add Drug");
+            System.out.println("2. Search Drug by Code");
+            System.out.println("3. Search Drug by Name");
+            System.out.println("4. View All Drugs");
+            System.out.println("5. View Purchase History for a Drug");
+            System.out.println("6. Link Drug to Supplier");
+            System.out.println("7. Search Suppliers for a Drug");
+            System.out.println("8. Record Drug Sale");
+            System.out.println("0. Exit");
+            System.out.print("Enter your choice: ");
+            choice = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
+
+            switch (choice) {
+                case 1:
+                    System.out.println("Enter drug code: ");
+                    String code = scanner.nextLine();
+                    System.out.println("Enter drug name: ");
+                    String name = scanner.nextLine();
+                    System.out.println("Enter drug quantity: ");
+                    int quantity = scanner.nextInt();
+                    System.out.println("Enter drug price: ");
+                    double price = scanner.nextDouble();
+                    drugs.add(new Drug(code, name, quantity, price));
+                    break;
+                case 2:
+                    System.out.println("Enter drug code to search: ");
+                    String searchCode = scanner.nextLine();
+                    Drug foundDrugByCode = searchDrugByCode(drugs, searchCode);
+                    if (foundDrugByCode != null) {
+                        System.out.println("Drug found: " + foundDrugByCode);
+                    } else {
+                        System.out.println("Drug not found.");
+                    }
+                    break;
+                case 3:
+                    System.out.println("Enter drug name to search: ");
+                    String searchName = scanner.nextLine();
+                    Drug foundDrugByName = searchDrugByName(drugs, searchName);
+                    if (foundDrugByName != null) {
+                        System.out.println("Drug found: " + foundDrugByName);
+                    } else {
+                        System.out.println("Drug not found.");
+                    }
+                    break;
+                case 4:
+                    System.out.println("All Drugs:");
+                    for (Drug drug : drugs) {
+                        System.out.println(drug);
+                    }
+                    break;
+                case 5:
+                    System.out.println("Enter drug code to view purchase history: ");
+                    String drugCode = scanner.nextLine();
+                    Drug drugForHistory = searchDrugByCode(drugs, drugCode);
+                    if (drugForHistory != null) {
+                        System.out.println("Purchase History for Drug: " + drugForHistory.getDrugName());
+                        for (Map.Entry<Date, Purchase> entry : purchaseHistory.entrySet()) {
+                            if (entry.getValue().getDrug().equals(drugForHistory)) {
+                                System.out.println(entry.getValue());
+                            }
+                        }
+                    } else {
+                        System.out.println("Drug not found.");
+                    }
+                    break;
+                case 6:
+                    System.out.println("Enter drug code to link to a supplier: ");
+                    String drugCodeToLink = scanner.nextLine();
+                    Drug drugToLink = searchDrugByCode(drugs, drugCodeToLink);
+                    if (drugToLink != null) {
+                        System.out.println("Enter supplier name: ");
+                        String supplierName = scanner.nextLine();
+                        System.out.println("Enter supplier location: ");
+                        String supplierLocation = scanner.nextLine();
+                        Supplier supplier = new Supplier(supplierName, supplierLocation);
+                        linkDrugToSupplier(drugSuppliers, drugToLink, supplier);
+                    } else {
+                        System.out.println("Drug not found.");
+                    }
+                    break;
+                case 7:
+                    System.out.println("Enter drug code to search suppliers: ");
+                    String searchCodeForSupplier = scanner.nextLine();
+                    Drug drugForSupplierSearch = searchDrugByCode(drugs, searchCodeForSupplier);
+                    if (drugForSupplierSearch != null) {
+                        ArrayList<Supplier> suppliers = searchSuppliersForDrug(drugSuppliers, drugForSupplierSearch);
+                        if (!suppliers.isEmpty()) {
+                            System.out.println("Suppliers for Drug: " + drugForSupplierSearch.getDrugName());
+                            for (Supplier supplier : suppliers) {
+                                System.out.println(supplier);
+                            }
+                        } else {
+                            System.out.println("No suppliers found for the drug.");
+                        }
+                    } else {
+                        System.out.println("Drug not found.");
+                    }
+                    break;
+                case 8:
+                    System.out.println("Enter drug code for the sale: ");
+                    String drugCodeForSale = scanner.nextLine();
+                    Drug drugForSale = searchDrugByCode(drugs, drugCodeForSale);
+                    if (drugForSale != null) {
+                        System.out.println("Enter quantity sold: ");
+                        int quantitySold = scanner.nextInt();
+                        double totalPrice = quantitySold * drugForSale.getPrice();
+                        recordDrugSale(drugSales, drugCodeForSale, quantitySold);
+                        Purchase purchase = new Purchase(new Date(), "Customer", quantitySold, totalPrice, drugForSale);
+                        purchaseHistory.put(purchase.getPurchaseDate(), purchase);
+                    } else {
+                        System.out.println("Drug not found.");
+                    }
+                    break;
+                case 0:
+                    System.out.println("Exiting Pharmacy Management System...");
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        } while (choice != 0);
+
+        scanner.close();
+    }
+
+    public static Drug searchDrugByCode(ArrayList<Drug> drugs, String drugCode) {
+        for (Drug drug : drugs) {
+            if (drug.getDrugCode().equalsIgnoreCase(drugCode)) {
+                return drug;
+            }
+        }
+        return null;
+    }
+
+    public static Drug searchDrugByName(ArrayList<Drug> drugs, String drugName) {
+        for (Drug drug : drugs) {
+            if (drug.getDrugName().equalsIgnoreCase(drugName)) {
+                return drug;
+            }
+        }
+        return null;
+    }
+
+    public static void linkDrugToSupplier(HashMap<Drug, ArrayList<Supplier>> drugSuppliers, Drug drug, Supplier supplier) {
+        if (drugSuppliers.containsKey(drug)) {
+            drugSuppliers.get(drug).add(supplier);
+        } else {
+            ArrayList<Supplier> suppliers = new ArrayList<>();
+            suppliers.add(supplier);
+            drugSuppliers.put(drug, suppliers);
+        }
+    }
+
+    public static ArrayList<Supplier> searchSuppliersForDrug(HashMap<Drug, ArrayList<Supplier>> drugSuppliers, Drug drug) {
+        return drugSuppliers.getOrDefault(drug, new ArrayList<>());
+    }
+
+    public static void recordDrugSale(HashMap<String, Integer> drugSales, String drugCode, int quantitySold) {
+        drugSales.put(drugCode, drugSales.getOrDefault(drugCode, 0) + quantitySold);
+    }
+}
+
+class Drug {
+    private String drugCode;
+    private String drugName;
+    private int quantity;
+    private double price;
+
+    public Drug(String drugCode, String drugName, int quantity, double price) {
+        this.drugCode = drugCode;
+        this.drugName = drugName;
+        this.quantity = quantity;
+        this.price = price;
+    }
+
+    public String getDrugCode() {
+        return drugCode;
+    }
+
+    public String getDrugName() {
+        return drugName;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    @Override
+    public String toString() {
+        return "Drug [Code: " + drugCode + ", Name: " + drugName + ", Quantity: " + quantity + ", Price: " + price + "]";
+    }
+}
+
+class Purchase {
+    private Date purchaseDate;
+    private String buyer;
+    private int quantity;
+    private double totalPrice;
+    private Drug drug;
+
+    public Purchase(Date purchaseDate, String buyer, int quantity, double totalPrice, Drug drug) {
+        this.purchaseDate = purchaseDate;
+        this.buyer = buyer;
+        this.quantity = quantity;
+        this.totalPrice = totalPrice;
+        this.drug = drug;
+    }
+
+    public Date getPurchaseDate() {
+        return purchaseDate;
+    }
+
+    public String getBuyer() {
+        return buyer;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public Drug getDrug() {
+        return drug;
+    }
+
+    @Override
+    public String toString() {
+        return "Purchase [Date: " + purchaseDate + ", Buyer: " + buyer + ", Quantity: " + quantity + ", Total Price: " + totalPrice + "]";
+    }
+}
+
+class Supplier {
+    private String name;
+    private String location;
+
+    public Supplier(String name, String location) {
+        this.name = name;
+        this.location = location;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    @Override
+    public String toString() {
+        return "Supplier [Name: " + name + ", Location: " + location + "]";
+    }
+}
